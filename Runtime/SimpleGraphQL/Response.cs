@@ -1,18 +1,36 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace SimpleGraphQL
 {
     [PublicAPI]
+    [Serializable]
     public class Response<T>
     {
+        [SerializeField]
+        private T data;
+
+        [CanBeNull] 
+        [SerializeField]
+        private Error[] errors;
+
         [DataMember(Name = "data")]
-        public T Data { get; set; }
+        public T Data
+        {
+            get => data;
+            set => data = value;
+        }
 
         [DataMember(Name = "errors")]
         [CanBeNull]
-        public Error[] Errors { get; set; }
+        public Error[] Errors
+        {
+            get => errors;
+            set => errors = value;
+        }
 
         [Preserve] // Ensures it survives code-stripping
         public Response()
@@ -21,6 +39,7 @@ namespace SimpleGraphQL
     }
 
     [PublicAPI]
+    [Serializable]
     public class Error
     {
         [DataMember(Name = "message")]
@@ -41,6 +60,7 @@ namespace SimpleGraphQL
     }
 
     [PublicAPI]
+    [Serializable]
     public class Location
     {
         [DataMember(Name = "line")]
