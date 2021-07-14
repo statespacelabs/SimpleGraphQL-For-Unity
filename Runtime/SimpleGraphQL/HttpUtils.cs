@@ -30,6 +30,15 @@ namespace SimpleGraphQL
         }
 
         /// <summary>
+        /// For when the WebSocket needs to be disposed and reset.
+        /// </summary>
+        public static void Dispose()
+        {
+            _webSocket?.Dispose();
+            _webSocket = null;
+        }
+
+        /// <summary>
         /// POST a query to the given endpoint url.
         /// </summary>
         /// <param name="url">The endpoint url.</param>
@@ -38,7 +47,7 @@ namespace SimpleGraphQL
         /// <param name="authToken">The actual auth token.</param>
         /// <param name="headers">Any headers that should be passed in</param>
         /// <returns></returns>
-        public static async Task<string> PostRequestAsync(
+        public static async Task<string> PostRequest(
             string url,
             Request request,
             Dictionary<string, string> headers = null,
@@ -50,46 +59,57 @@ namespace SimpleGraphQL
 
             byte[] payload = request.ToBytes();
 
-            var webRequest = new UnityWebRequest(uri, "POST")
+            using (var webRequest = new UnityWebRequest(uri, "POST")
             {
                 uploadHandler = new UploadHandlerRaw(payload),
-                downloadHandler = new DownloadHandlerBuffer()
-            };
-
-            if (authToken != null)
-                webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
-
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-
-            if (headers != null)
+                downloadHandler = new DownloadHandlerBuffer(),
+                disposeCertificateHandlerOnDispose = true,
+                disposeDownloadHandlerOnDispose = true,
+                disposeUploadHandlerOnDispose = true
+            })
             {
-                foreach (KeyValuePair<string, string> header in headers)
+                if (authToken != null)
+                    webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+
+                webRequest.SetRequestHeader("Content-Type", "application/json");
+
+                if (headers != null)
                 {
-                    webRequest.SetRequestHeader(header.Key, header.Value);
+                    foreach (KeyValuePair<string, string> header in headers)
+                    {
+                        webRequest.SetRequestHeader(header.Key, header.Value);
+                    }
                 }
-            }
 
-            try
-            {
-                webRequest.SendWebRequest();
-
-                while (!webRequest.isDone)
+                try
                 {
-                    await Task.Yield();
+                    webRequest.SendWebRequest();
+
+                    while (!webRequest.isDone)
+                    {
+                        await Task.Yield();
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("[SimpleGraphQL] " + e);
-                throw new UnityWebRequestException(webRequest);
-            }
+                catch (Exception e)
+                {
+                    Debug.LogError("[SimpleGraphQL] " + e);
+                    throw new UnityWebRequestException(webRequest);
+                }
 
-            if (webRequest.result != UnityWebRequest.Result.Success)
-            {
-                throw new UnityWebRequestException(webRequest);
-            }
+#if UNITY_2020_2_OR_NEWER
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                {
+                    throw new UnityWebRequestException(webRequest);
+                }
+#elif UNITY_2019_4
+                if (webRequest.isNetworkError || webRequest.isHttpError)
+                {
+                    throw new UnityWebRequestException(webRequest);
+                }
+#endif
 
-            return webRequest.downloadHandler.text;
+                return webRequest.downloadHandler.text;
+            }
         }
 
         public static bool IsWebSocketReady() =>
@@ -136,7 +156,7 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is connecting");
                 await _webSocket.ConnectAsync(uri, CancellationToken.None);
 
-                Debug.Log("Websocket is initting");
+                Debug.Log("Websocket is starting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
                     new ArraySegment<byte>(Encoding.UTF8.GetBytes(@"{""type"":""connection_init""}")),
@@ -174,14 +194,9 @@ namespace SimpleGraphQL
         /// Subscribe to a query.
         /// </summary>
         /// <param name="id">Used to identify the subscription. Must be unique per query.</param>
-        /// <param name="query">The subscription query.</param>
-        /// <param name="variables"></param>
+        /// <param name="request">The subscription query.</param>
         /// <returns>true if successful</returns>
-        public static async Task<bool> WebSocketSubscribe(
-            string id,
-            Query query,
-            Dictionary<string, object> variables
-        )
+        public static async Task<bool> WebSocketSubscribe(string id, Request request)
         {
             if (!IsWebSocketReady())
             {
@@ -196,13 +211,13 @@ namespace SimpleGraphQL
                     type = "start",
                     payload = new
                     {
-                        query = query.Source,
-                        variables,
-                        operationName = query.OperationName
+                        query = request.Query,
+                        variables = request.Variables,
+                        operationName = request.OperationName
                     }
                 },
                 Formatting.None,
-                new JsonSerializerSettings()
+                new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 }
@@ -299,7 +314,7 @@ namespace SimpleGraphQL
                     }
                     case "error":
                     {
-                        throw new WebSocketException("Handshake error Error: " + jsonResult);
+                        throw new WebSocketException("Handshake error. Error: " + jsonResult);
                     }
                     case "complete":
                     {
