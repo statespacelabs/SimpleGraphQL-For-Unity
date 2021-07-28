@@ -5,6 +5,7 @@ using UnityEngine.Scripting;
 namespace SimpleGraphQL
 {
     [PublicAPI]
+    [Preserve]
     public class Response<T>
     {
         [DataMember(Name = "data")]
@@ -21,6 +22,7 @@ namespace SimpleGraphQL
     }
 
     [PublicAPI]
+    [Preserve]
     public class Error
     {
         [DataMember(Name = "message")]
@@ -41,6 +43,7 @@ namespace SimpleGraphQL
     }
 
     [PublicAPI]
+    [Preserve]
     public class Location
     {
         [DataMember(Name = "line")]
