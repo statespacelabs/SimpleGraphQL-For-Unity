@@ -85,6 +85,7 @@ namespace SimpleGraphQL
                 {
                     webRequest.SendWebRequest();
 
+                    Debug.LogWarning($"HTTP REQUEST - uri:{uri}, Authorization ${authScheme} {authToken}");
                     while (!webRequest.isDone)
                     {
                         await Task.Yield();
@@ -107,7 +108,7 @@ namespace SimpleGraphQL
                     throw new UnityWebRequestException(webRequest);
                 }
 #endif
-
+                Debug.LogWarning($"HTTP REQUEST RESPONSE - url:{uri}, text:{webRequest.downloadHandler.text}");
                 return webRequest.downloadHandler.text;
             }
         }
@@ -289,47 +290,47 @@ namespace SimpleGraphQL
                     throw new ApplicationException(e.Message);
                 }
 
-                var subType = (string) jsonObj["type"];
+                var subType = (string)jsonObj["type"];
                 switch (subType)
                 {
                     case "connection_error":
-                    {
-                        throw new WebSocketException("Connection error. Error: " + jsonResult);
-                    }
-                    case "connection_ack":
-                    {
-                        Debug.Log("Websocket connection acknowledged.");
-                        continue;
-                    }
-                    case "data":
-                    {
-                        JToken jToken = jsonObj["payload"];
-
-                        if (jToken != null)
                         {
-                            SubscriptionDataReceived?.Invoke(jToken.ToString());
+                            throw new WebSocketException("Connection error. Error: " + jsonResult);
                         }
+                    case "connection_ack":
+                        {
+                            Debug.Log("Websocket connection acknowledged.");
+                            continue;
+                        }
+                    case "data":
+                        {
+                            JToken jToken = jsonObj["payload"];
 
-                        continue;
-                    }
+                            if (jToken != null)
+                            {
+                                SubscriptionDataReceived?.Invoke(jToken.ToString());
+                            }
+
+                            continue;
+                        }
                     case "error":
-                    {
-                        throw new WebSocketException("Handshake error. Error: " + jsonResult);
-                    }
+                        {
+                            throw new WebSocketException("Handshake error. Error: " + jsonResult);
+                        }
                     case "complete":
-                    {
-                        Debug.Log("Server sent complete, it's done sending data.");
-                        break;
-                    }
+                        {
+                            Debug.Log("Server sent complete, it's done sending data.");
+                            break;
+                        }
                     case "ka":
-                    {
-                        // stayin' alive, stayin' alive
-                        continue;
-                    }
+                        {
+                            // stayin' alive, stayin' alive
+                            continue;
+                        }
                     case "subscription_fail":
-                    {
-                        throw new WebSocketException("Subscription failed. Error: " + jsonResult);
-                    }
+                        {
+                            throw new WebSocketException("Subscription failed. Error: " + jsonResult);
+                        }
                 }
 
                 break;
