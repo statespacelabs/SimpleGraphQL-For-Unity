@@ -9,6 +9,7 @@ namespace SimpleGraphQL
     public class Response<T>
     {
         [DataMember(Name = "data")]
+        [PreserveAttribute]
         public T Data { get; set; }
 
         [DataMember(Name = "errors")]
