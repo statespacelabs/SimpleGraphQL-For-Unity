@@ -31,7 +31,11 @@ namespace SimpleGraphQL
         [DataMember(Name = "locations")]
         [CanBeNull]
         public Location[] Locations { get; set; }
-
+        
+        [DataMember(Name = "extensions")]
+        [CanBeNull]
+        public Extensions Extensions { get; set; }
+        
         [DataMember(Name = "path")]
         [CanBeNull]
         public object[] Path { get; set; } // Path objects can be either integers or strings
@@ -42,6 +46,19 @@ namespace SimpleGraphQL
         }
     }
 
+    [PublicAPI]
+    [Preserve]
+    public class Extensions
+    {
+        [DataMember(Name = "code")]
+        public string Code { get; set; }
+
+        [Preserve] // Ensures it survives code-stripping
+        public Extensions()
+        {
+        }
+    }
+    
     [PublicAPI]
     [Preserve]
     public class Location
@@ -56,5 +73,5 @@ namespace SimpleGraphQL
         public Location()
         {
         }
-    }
+    }   
 }
