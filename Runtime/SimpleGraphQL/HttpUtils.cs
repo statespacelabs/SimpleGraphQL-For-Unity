@@ -84,8 +84,9 @@ namespace SimpleGraphQL
                 try
                 {
                     webRequest.SendWebRequest();
-
+#if UNITY_EDITOR
                     Debug.LogWarning($"HTTP REQUEST - uri:{uri}, Authorization ${authScheme} {authToken}");
+#endif
                     while (!webRequest.isDone)
                     {
                         await Task.Yield();
@@ -93,7 +94,9 @@ namespace SimpleGraphQL
                 }
                 catch (Exception e)
                 {
+#if UNITY_EDITOR
                     Debug.LogError("[SimpleGraphQL] " + e);
+#endif
                     throw new UnityWebRequestException(webRequest);
                 }
 
@@ -108,7 +111,9 @@ namespace SimpleGraphQL
                     throw new UnityWebRequestException(webRequest);
                 }
 #endif
+#if UNITY_EDITOR
                 Debug.LogWarning($"HTTP REQUEST RESPONSE - url:{uri}, text:{webRequest.downloadHandler.text}");
+#endif
                 return webRequest.downloadHandler.text;
             }
         }
