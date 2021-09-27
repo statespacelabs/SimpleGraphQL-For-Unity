@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace SimpleGraphQL
 {
@@ -102,6 +104,7 @@ namespace SimpleGraphQL
         {
             return await Send<TResponse>(request, headers, authToken, authScheme);
         }
+
 
         /// <summary>
         /// Registers a listener for subscriptions.
