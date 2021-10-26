@@ -21,6 +21,7 @@ namespace SimpleGraphQL
             return Path.GetFullPath(assetPath);
         }
 
+        #if !UNITY_2020_2_OR_NEWER
         void IUnityLinkerProcessor.OnBeforeRun(BuildReport report, UnityLinkerBuildPipelineData data)
         {
         }
@@ -28,5 +29,6 @@ namespace SimpleGraphQL
         void IUnityLinkerProcessor.OnAfterRun(BuildReport report, UnityLinkerBuildPipelineData data)
         {
         }
+        #endif
     }
 }
