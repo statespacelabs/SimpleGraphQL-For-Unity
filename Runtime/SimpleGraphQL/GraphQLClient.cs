@@ -89,11 +89,8 @@ namespace SimpleGraphQL
             string authScheme = null
         )
         {
-            return await Task.Run(async () =>
-            {
-                string json = await Send(request, headers, authToken, authScheme);
-                return JsonConvert.DeserializeObject<Response<TResponse>>(json);
-            });
+            string json = await Send(request, headers, authToken, authScheme);
+            return await Task.Run(async () => JsonConvert.DeserializeObject<Response<TResponse>>(json));
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
