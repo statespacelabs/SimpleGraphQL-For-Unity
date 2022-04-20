@@ -301,22 +301,24 @@ namespace SimpleGraphQL
                 switch (msgType)
                 {
                     case "connection_error":
-                    {
-                        throw new WebSocketException("Connection error. Error: " + jsonResult);
-                    }
-                    case "connection_ack":
-                    {
-                        Debug.Log("Websocket connection acknowledged.");
-                        continue;
-                    }
-                    case "data":
-                    case "next":
-                    {
-                        JToken jToken = jsonObj["payload"];
-
-                        if (jToken != null)
                         {
                             throw new WebSocketException("Connection error. Error: " + jsonResult);
+                        }
+                    case "connection_ack":
+                        {
+                            Debug.Log("Websocket connection acknowledged.");
+                            continue;
+                        }
+                    case "data":
+                    case "next":
+                        {
+                            JToken jToken = jsonObj["payload"];
+
+                            if (jToken != null)
+                            {
+                                throw new WebSocketException("Connection error. Error: " + jsonResult);
+                            }
+                            continue;
                         }
                     case "connection_ack":
                         {
