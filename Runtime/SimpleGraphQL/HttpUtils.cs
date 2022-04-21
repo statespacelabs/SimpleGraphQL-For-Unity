@@ -132,10 +132,10 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public static async Task WebSocketConnect(
             string url,
-            string protocol = "graphql-ws",
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null
+            string authScheme = null,
+            string protocol = "graphql-ws"
         )
         {
             url = url.Replace("http", "ws");
@@ -165,7 +165,9 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is starting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
-                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(@"{""type"":""connection_init""}")),
+                    new ArraySegment<byte>(
+                        Encoding.UTF8.GetBytes(@"{""type"":""connection_init"",""payload"": {}}")
+                    ),
                     WebSocketMessageType.Text,
                     true,
                     CancellationToken.None
@@ -295,12 +297,28 @@ namespace SimpleGraphQL
                     throw new ApplicationException(e.Message);
                 }
 
-                var subType = (string)jsonObj["type"];
-                switch (subType)
+                var msgType = (string)jsonObj["type"];
+                switch (msgType)
                 {
                     case "connection_error":
                         {
                             throw new WebSocketException("Connection error. Error: " + jsonResult);
+                        }
+                    case "connection_ack":
+                        {
+                            Debug.Log("Websocket connection acknowledged.");
+                            continue;
+                        }
+                    case "data":
+                    case "next":
+                        {
+                            JToken jToken = jsonObj["payload"];
+
+                            if (jToken != null)
+                            {
+                                throw new WebSocketException("Connection error. Error: " + jsonResult);
+                            }
+                            continue;
                         }
                     case "connection_ack":
                         {
@@ -335,6 +353,16 @@ namespace SimpleGraphQL
                     case "subscription_fail":
                         {
                             throw new WebSocketException("Subscription failed. Error: " + jsonResult);
+                        }
+                    case "ping":
+                        {
+                            await _webSocket.SendAsync(
+                                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""pong""}}")),
+                                WebSocketMessageType.Text,
+                                true,
+                                CancellationToken.None
+                            );
+                            continue;
                         }
                 }
 
