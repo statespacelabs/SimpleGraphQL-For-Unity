@@ -320,22 +320,6 @@ namespace SimpleGraphQL
                             }
                             continue;
                         }
-                    case "connection_ack":
-                        {
-                            Debug.Log("Websocket connection acknowledged.");
-                            continue;
-                        }
-                    case "data":
-                        {
-                            JToken jToken = jsonObj["payload"];
-
-                            if (jToken != null)
-                            {
-                                SubscriptionDataReceived?.Invoke(jToken.ToString());
-                            }
-
-                            continue;
-                        }
                     case "error":
                         {
                             throw new WebSocketException("Handshake error. Error: " + jsonResult);
