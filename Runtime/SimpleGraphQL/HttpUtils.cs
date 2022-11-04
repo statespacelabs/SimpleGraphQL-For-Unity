@@ -22,11 +22,6 @@ namespace SimpleGraphQL
         /// </summary>
         public static event Action<string> SubscriptionDataReceived;
 
-        /// <summary>
-        /// Called when the websocket receives subscription data.
-        /// </summary>
-        public static event Action<string> SubscriptionDataReceived;
-
         public static HttpClient httpClient;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
