@@ -87,7 +87,7 @@ namespace SimpleGraphQL
             try
             {
                 #if UNITY_EDITOR
-                    Debug.Log("Firing SimpleGraphQL POST Request.\n\n Headers: \n " + requestMessage.Headers.ToString() + "\n\n Content: \n" + payload")"
+                    Debug.Log("Firing SimpleGraphQL POST Request.\n\n Headers: \n " + requestMessage.Headers.ToString() + "\n\n Content: \n" + payload);
                 #endif
                 var response = await httpClient.SendAsync(requestMessage);
                 return await response.Content.ReadAsStringAsync();
