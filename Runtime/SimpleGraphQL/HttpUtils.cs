@@ -22,11 +22,21 @@ namespace SimpleGraphQL
         /// </summary>
         public static event Action<string> SubscriptionDataReceived;
 
+        /// <summary>
+        /// Called when the websocket receives subscription data.
+        /// </summary>
+        public static event Action<string> SubscriptionDataReceived;
+
+        public static HttpClient httpClient;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
             _webSocket?.Dispose();
             SubscriptionDataReceived = null;
+            // Create a New HttpClient object.
+
+            httpClient = new HttpClient();
+
         }
 
         /// <summary>
@@ -57,64 +67,39 @@ namespace SimpleGraphQL
         {
             var uri = new Uri(url);
 
-            byte[] payload = request.ToBytes();
+            string payload = request.ToJson();
+            
+            var requestMessage = new HttpRequestMessage();
 
-            using (var webRequest = new UnityWebRequest(uri, "POST")
+            if (authToken != null)
             {
-                uploadHandler = new UploadHandlerRaw(payload),
-                downloadHandler = new DownloadHandlerBuffer(),
-                disposeCertificateHandlerOnDispose = true,
-                disposeDownloadHandlerOnDispose = true,
-                disposeUploadHandlerOnDispose = true
-            })
+                requestMessage.Headers.Add("Authorization", $"{authScheme} {authToken}");
+            }
+
+            requestMessage.Method = HttpMethod.Post;
+            
+            if (headers != null)
             {
-                if (authToken != null)
-                    webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+                foreach (KeyValuePair<string, string> header in headers)
+                {
+                    requestMessage.Headers.Add(header.Key, header.Value);
+                }
+            }
 
-                webRequest.SetRequestHeader("Content-Type", "application/json");
+            requestMessage.Content = new StringContent(payload,  Encoding.UTF8, "application/json");
+            requestMessage.RequestUri = uri;
 
-                if (headers != null)
-                {
-                    foreach (KeyValuePair<string, string> header in headers)
-                    {
-                        webRequest.SetRequestHeader(header.Key, header.Value);
-                    }
-                }
-
-                try
-                {
-                    webRequest.SendWebRequest();
-#if UNITY_EDITOR
-                    Debug.LogWarning($"HTTP REQUEST - uri:{uri}, Authorization ${authScheme} {authToken}");
-#endif
-                    while (!webRequest.isDone)
-                    {
-                        await Task.Yield();
-                    }
-                }
-                catch (Exception e)
-                {
-#if UNITY_EDITOR
-                    Debug.LogError("[SimpleGraphQL] " + e);
-#endif
-                    throw new UnityWebRequestException(webRequest);
-                }
-
-#if UNITY_2020_2_OR_NEWER
-                if (webRequest.result != UnityWebRequest.Result.Success)
-                {
-                    throw new UnityWebRequestException(webRequest);
-                }
-#elif UNITY_2019_4
-                if (webRequest.isNetworkError || webRequest.isHttpError)
-                {
-                    throw new UnityWebRequestException(webRequest);
-                }
-#endif
-#if UNITY_EDITOR
-                Debug.LogWarning($"HTTP REQUEST RESPONSE - url:{uri}, text:{webRequest.downloadHandler.text}");
-#endif
-                return webRequest.downloadHandler.text;
+            try
+            {
+                #if UNITY_EDITOR
+                    Debug.Log("Firing SimpleGraphQL POST Request.\n\n Headers: \n " + requestMessage.Headers.ToString() + "\n\n Content: \n" + payload")"
+                #endif
+                var response = await httpClient.SendAsync(requestMessage);
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception e)
+            {
+                throw e;
             }
         }
 
@@ -145,7 +130,9 @@ namespace SimpleGraphQL
             _webSocket.Options.AddSubProtocol(protocol);
 
             if (authToken != null)
+            {
                 _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+            }
 
             _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
 
