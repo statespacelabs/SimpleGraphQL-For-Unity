@@ -82,7 +82,7 @@ namespace SimpleGraphQL
             return postQueryAsync;
         }
 
-        public Response<TResponse> Send<TResponse>(
+        public async Task<Response<TResponse>> Send<TResponse>(
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
