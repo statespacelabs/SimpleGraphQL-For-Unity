@@ -25,14 +25,12 @@ namespace SimpleGraphQL
         public static event Action<string> SubscriptionDataReceived;
 
         public static HttpClient httpClient;
-        private static Stopwatch _stopwatch;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
             _webSocket?.Dispose();
             SubscriptionDataReceived = null;
             // Create a New HttpClient object.
-            _stopwatch = new Stopwatch();
             httpClient = new HttpClient();
         }
 
@@ -90,10 +88,11 @@ namespace SimpleGraphQL
 
             try
             {
+                Stopwatch stopwatch = null;
                 if (debug)
                 {
-                    _stopwatch.Reset();
-                    _stopwatch.Start();
+                    stopwatch = new Stopwatch();
+                    stopwatch.Start();
 
                     Debug.Log("Firing SimpleGraphQL POST Request." +
                               "\n\nURL: \n " + requestMessage.RequestUri.ToString() + 
@@ -106,9 +105,9 @@ namespace SimpleGraphQL
                 
                 if (debug)
                 {
-                    _stopwatch.Stop();
+                    stopwatch.Stop();
                     Debug.Log("Received SimpleGraphQL POST Response." +
-                              "\n\nTime in ms: \n " + _stopwatch.ElapsedMilliseconds + 
+                              "\n\nTime in ms: \n " + stopwatch.ElapsedMilliseconds + 
                               "\n\nHeaders: \n " + response.Headers.ToString() + 
                               "\n\nContent: \n" + responseContent);
                 }
