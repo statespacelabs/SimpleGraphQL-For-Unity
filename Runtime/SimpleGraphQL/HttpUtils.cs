@@ -90,7 +90,12 @@ namespace SimpleGraphQL
                     Debug.Log("Firing SimpleGraphQL POST Request.\n\n Headers: \n " + requestMessage.Headers.ToString() + "\n\n Content: \n" + payload);
                 #endif
                 var response = await httpClient.SendAsync(requestMessage);
-                return await response.Content.ReadAsStringAsync();
+                var responseContent = await response.Content.ReadAsStringAsync();
+                #if UNITY_EDITOR
+                    Debug.Log("Received SimpleGraphQL POST Response.\n\n Headers: \n " + response.Headers.ToString() + "\n\n Content: \n" + responseContent);
+                #endif
+
+                return responseContent;
             }
             catch (Exception e)
             {
