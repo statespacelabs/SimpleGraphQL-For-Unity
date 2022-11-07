@@ -32,9 +32,8 @@ namespace SimpleGraphQL
             _webSocket?.Dispose();
             SubscriptionDataReceived = null;
             // Create a New HttpClient object.
-
+            _stopwatch = new Stopwatch();
             httpClient = new HttpClient();
-
         }
 
         /// <summary>
