@@ -53,7 +53,8 @@ namespace SimpleGraphQL
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null
+            string authScheme = null,
+            bool debug = false
         )
         {
             if (CustomHeaders != null)
@@ -76,7 +77,8 @@ namespace SimpleGraphQL
                 request,
                 headers,
                 authToken,
-                authScheme
+                authScheme,
+                debug
             );
 
             return postQueryAsync;
@@ -86,10 +88,11 @@ namespace SimpleGraphQL
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null
+            string authScheme = null,
+            bool debug = false
         )
         {
-            string json = await Send(request, headers, authToken, authScheme);
+            string json = await Send(request, headers, authToken, authScheme, debug);
             return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
@@ -98,9 +101,10 @@ namespace SimpleGraphQL
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null)
+            string authScheme = null,
+            bool debug = false)
         {
-            return await Send<TResponse>(request, headers, authToken, authScheme);
+            return await Send<TResponse>(request, headers, authToken, authScheme, debug);
         }
 
         /// <summary>
