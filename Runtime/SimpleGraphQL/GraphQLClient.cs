@@ -82,7 +82,7 @@ namespace SimpleGraphQL
             return postQueryAsync;
         }
 
-        public async Task<Response<TResponse>> Send<TResponse>(
+        public Response<TResponse> Send<TResponse>(
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
@@ -90,7 +90,7 @@ namespace SimpleGraphQL
         )
         {
             string json = await Send(request, headers, authToken, authScheme);
-            return await Task.Run(async () => JsonConvert.DeserializeObject<Response<TResponse>>(json));
+            return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
