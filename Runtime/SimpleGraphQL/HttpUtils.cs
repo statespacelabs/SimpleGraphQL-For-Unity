@@ -30,6 +30,7 @@ namespace SimpleGraphQL
         {
             _webSocket?.Dispose();
             SubscriptionDataReceived = null;
+
             // Create a New HttpClient object.
             httpClient = new HttpClient();
         }
@@ -109,7 +110,10 @@ namespace SimpleGraphQL
                     Debug.Log("Received SimpleGraphQL POST Response." +
                               "\n\nTime in ms: \n " + stopwatch.ElapsedMilliseconds + 
                               "\n\nHeaders: \n " + response.Headers.ToString() + 
-                              "\n\nContent: \n" + responseContent);
+                              "\n\nContent: \n" + responseContent +
+                              "\n\nRequest URL: \n " + requestMessage.RequestUri.ToString() + 
+                              "\n\nRequest Headers: \n " + requestMessage.Headers.ToString() + 
+                              "\n\nRequest Content: \n" + payload);
                 }
 
                 return responseContent;
