@@ -95,9 +95,10 @@ namespace SimpleGraphQL
                     stopwatch = new Stopwatch();
                     stopwatch.Start();
 
-                    Debug.Log("Firing SimpleGraphQL POST Request." +
+                    Debug.Log($"Firing SimpleGraphQL POST Request {request.OperationName}" +
                               "\n\nURL: \n " + requestMessage.RequestUri.ToString() + 
                               "\n\nHeaders: \n " + requestMessage.Headers.ToString() + 
+                              $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" + 
                               "\n\nContent: \n" + payload);
                 }
                 
@@ -107,10 +108,11 @@ namespace SimpleGraphQL
                 if (debug)
                 {
                     stopwatch.Stop();
-                    Debug.Log("Received SimpleGraphQL POST Response." +
+                    Debug.Log($"Received SimpleGraphQL POST Response {request.OperationName}" +
                               "\n\nTime in ms: \n " + stopwatch.ElapsedMilliseconds + 
                               "\n\nHeaders: \n " + response.Headers.ToString() + 
                               "\n\nContent: \n" + responseContent +
+                              $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
                               "\n\nRequest URL: \n " + requestMessage.RequestUri.ToString() + 
                               "\n\nRequest Headers: \n " + requestMessage.Headers.ToString() + 
                               "\n\nRequest Content: \n" + payload);
