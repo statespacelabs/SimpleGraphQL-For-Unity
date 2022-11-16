@@ -63,6 +63,11 @@ namespace SimpleGraphQL
             bool debug = false
         )
         {
+            if (httpClient == null)
+            {
+                httpClient = new HttpClient();
+            }
+            
             var uri = new Uri(url);
 
             string payload = request.ToJson();
