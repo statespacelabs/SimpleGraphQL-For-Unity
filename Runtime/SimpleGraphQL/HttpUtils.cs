@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
@@ -32,7 +33,16 @@ namespace SimpleGraphQL
             SubscriptionDataReceived = null;
 
             // Create a New HttpClient object.
-            httpClient = new HttpClient();
+            InitializeHttpClient();
+        }
+
+        private static void InitializeHttpClient()
+        {
+            var httpMessageHandler = new HttpClientHandler
+                                     {
+                                         Proxy = WebRequest.GetSystemWebProxy() 
+                                     };
+            httpClient = new HttpClient(httpMessageHandler);
         }
 
         /// <summary>
@@ -65,7 +75,7 @@ namespace SimpleGraphQL
         {
             if (httpClient == null)
             {
-                httpClient = new HttpClient();
+                InitializeHttpClient();
             }
             
             var uri = new Uri(url);
