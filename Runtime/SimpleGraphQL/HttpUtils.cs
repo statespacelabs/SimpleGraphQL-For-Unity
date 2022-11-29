@@ -40,7 +40,7 @@ namespace SimpleGraphQL
         {
             var httpMessageHandler = new HttpClientHandler
                                      {
-                                         Proxy = WebRequest.GetSystemWebProxy() 
+                                         Proxy = new WebProxy("127.0.0.1", 8888)
                                      };
             httpClient = new HttpClient(httpMessageHandler);
         }
