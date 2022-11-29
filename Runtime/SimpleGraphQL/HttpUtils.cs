@@ -38,11 +38,7 @@ namespace SimpleGraphQL
 
         private static void InitializeHttpClient()
         {
-            var httpMessageHandler = new HttpClientHandler
-                                     {
-                                         Proxy = new WebProxy("127.0.0.1", 8888)
-                                     };
-            httpClient = new HttpClient(httpMessageHandler);
+            httpClient = new HttpClient();
         }
 
         /// <summary>
