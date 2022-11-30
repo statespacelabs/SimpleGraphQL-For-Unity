@@ -24,13 +24,15 @@ namespace SimpleGraphQL
         /// Called when the websocket receives subscription data.
         /// </summary>
         public static event Action<string> SubscriptionDataReceived;
-
+        public static Dictionary<string, Action<string>> SubscriptionDataReceivedPerChannel;
         public static HttpClient httpClient;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
             _webSocket?.Dispose();
             SubscriptionDataReceived = null;
+            SubscriptionDataReceivedPerChannel = new Dictionary<string, Action<string>>();
 
             // Create a New HttpClient object.
             InitializeHttpClient();
@@ -67,6 +69,7 @@ namespace SimpleGraphQL
         public static async Task<string> PostRequest(
             string url,
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
@@ -83,6 +86,7 @@ namespace SimpleGraphQL
             string payload = request.ToJson();
             
             var requestMessage = new HttpRequestMessage();
+            //byte[] payload = request.ToBytes(serializerSettings);
 
             if (authToken != null)
             {
@@ -168,12 +172,23 @@ namespace SimpleGraphQL
             _webSocket = new ClientWebSocket();
             _webSocket.Options.AddSubProtocol(protocol);
 
-            if (authToken != null)
-            {
-                _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+            var payload = new Dictionary<string, string>();
+
+            if(protocol == "graphql-transport-ws") {
+              payload["content-type"] = "application/json";
+            } else {
+              _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
             }
 
-            _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
+            if (authToken != null) {
+                if(protocol == "graphql-transport-ws") {
+                    // set Authorization as payload
+                    payload["Authorization"] = $"{authScheme} {authToken}";
+                } else {
+                    _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+                }
+            }
+
 
             if (headers != null)
             {
@@ -188,12 +203,23 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is connecting");
                 await _webSocket.ConnectAsync(uri, CancellationToken.None);
 
+                var json = JsonConvert.SerializeObject(
+                    new
+                    {
+                        type = "connection_init",
+                        payload = payload
+                    },
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }
+                );
+
                 Debug.Log("Websocket is starting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
-                    new ArraySegment<byte>(
-                        Encoding.UTF8.GetBytes(@"{""type"":""connection_init"",""payload"": {}}")
-                    ),
+                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(json)),
                     WebSocketMessageType.Text,
                     true,
                     CancellationToken.None
@@ -242,7 +268,7 @@ namespace SimpleGraphQL
                 new
                 {
                     id,
-                    type = "start",
+                    type = _webSocket.SubProtocol == "graphql-transport-ws" ? "subscribe" : "start",
                     payload = new
                     {
                         query = request.Query,
@@ -280,8 +306,10 @@ namespace SimpleGraphQL
                 return;
             }
 
+            var type = _webSocket.SubProtocol == "graphql-transport-ws" ? "complete" : "stop";
+
             await _webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
+                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""{type}"",""id"":""{id}""}}")),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None
@@ -324,6 +352,7 @@ namespace SimpleGraphQL
                 }
 
                 var msgType = (string)jsonObj["type"];
+                var id = (string)jsonObj["id"];
                 switch (msgType)
                 {
                     case "connection_error":
@@ -331,10 +360,10 @@ namespace SimpleGraphQL
                             throw new WebSocketException("Connection error. Error: " + jsonResult);
                         }
                     case "connection_ack":
-                        {
-                            Debug.Log("Websocket connection acknowledged.");
-                            continue;
-                        }
+                    {
+                        Debug.Log($"Websocket connection acknowledged ({id}).");
+                        continue;
+                    }
                     case "data":
                     case "next":
                         {
