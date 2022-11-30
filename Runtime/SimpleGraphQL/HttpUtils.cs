@@ -42,7 +42,7 @@ namespace SimpleGraphQL
                                         {
                                             Proxy = WebRequest.DefaultWebProxy
                                         };
-            Debug.Log(((WebProxy)WebRequest.DefaultWebProxy).Address.ToString());
+            Debug.Log(((WebProxy)WebRequest.DefaultWebProxy)?.Address.ToString());
             httpClient = new HttpClient(handler);
         }
 
