@@ -116,7 +116,7 @@ namespace SimpleGraphQL
                               "\n\nURL: \n " + requestMessage.RequestUri.ToString() + 
                               "\n\nHeaders: \n " + requestMessage.Headers.ToString() + 
                               $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" + 
-                              "\n\nContent: \n" + payload);
+                              "\n\nContent: \n" + payload.Replace("\\r\\n", "\n"));
                 }
                 
                 var response = await httpClient.SendAsync(requestMessage);
@@ -132,7 +132,7 @@ namespace SimpleGraphQL
                               "\n\nContent: \n" + responseContent +
                               "\n\nRequest URL: \n " + requestMessage.RequestUri.ToString() + 
                               "\n\nRequest Headers: \n " + requestMessage.Headers.ToString() + 
-                              "\n\nRequest Content: \n" + payload);
+                              "\n\nRequest Content: \n" + payload.Replace("\\r\\n", "\n"));
                 }
 
                 return responseContent;
