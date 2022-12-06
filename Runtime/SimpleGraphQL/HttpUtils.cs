@@ -38,11 +38,12 @@ namespace SimpleGraphQL
 
         private static void InitializeHttpClient()
         {
-            var httpMessageHandler = new HttpClientHandler
-                                     {
-                                         Proxy = WebRequest.GetSystemWebProxy() 
-                                     };
-            httpClient = new HttpClient(httpMessageHandler);
+            HttpClientHandler handler = new HttpClientHandler
+                                        {
+                                            Proxy = WebRequest.DefaultWebProxy
+                                        };
+            Debug.Log(((WebProxy)WebRequest.DefaultWebProxy)?.Address.ToString());
+            httpClient = new HttpClient(handler);
         }
 
         /// <summary>
