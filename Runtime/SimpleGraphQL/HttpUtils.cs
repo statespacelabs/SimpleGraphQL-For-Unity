@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -132,6 +133,16 @@ namespace SimpleGraphQL
                               "\n\nRequest URL: \n " + requestMessage.RequestUri.ToString() + 
                               "\n\nRequest Headers: \n " + requestMessage.Headers.ToString() + 
                               "\n\nRequest Content: \n" + payload.Replace("\\r\\n", "\n"));
+                }
+                else
+                {
+                    if (request?.OperationName != null && response?.Headers != null)
+                    {
+                        var aimlabsRequestHeader =
+                            response.Headers.FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
+                        var aimlabsRequestID = aimlabsRequestHeader.Value != null && aimlabsRequestHeader.Value.Any() ? aimlabsRequestHeader.Value.First() : "(ID NOT FOUND)"; 
+                        Debug.Log($"Received GraphQL Response for {request.OperationName}, id: {aimlabsRequestID}");
+                    }
                 }
 
                 return responseContent;
