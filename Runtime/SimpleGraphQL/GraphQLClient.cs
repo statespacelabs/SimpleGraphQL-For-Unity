@@ -51,6 +51,7 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public async Task<string> Send(
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
@@ -75,6 +76,7 @@ namespace SimpleGraphQL
             string postQueryAsync = await HttpUtils.PostRequest(
                 Endpoint,
                 request,
+                serializerSettings,
                 headers,
                 authToken,
                 authScheme,
@@ -86,25 +88,27 @@ namespace SimpleGraphQL
 
         public async Task<Response<TResponse>> Send<TResponse>(
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
             bool debug = false
         )
         {
-            string json = await Send(request, headers, authToken, authScheme, debug);
+            string json = await Send(request, serializerSettings, headers, authToken, authScheme, debug);
             return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
             Func<TResponse> responseTypeResolver,
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
             bool debug = false)
         {
-            return await Send<TResponse>(request, headers, authToken, authScheme, debug);
+            return await Send<TResponse>(request, serializerSettings, headers, authToken, authScheme, debug);
         }
 
         /// <summary>
@@ -116,6 +120,19 @@ namespace SimpleGraphQL
             HttpUtils.SubscriptionDataReceived += listener;
         }
 
+        public void RegisterListener(string id, Action<string> listener)
+        {
+            if(!HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id)) {
+              HttpUtils.SubscriptionDataReceivedPerChannel[id] = null;
+            }
+            HttpUtils.SubscriptionDataReceivedPerChannel[id] += listener;
+        }
+
+        public void RegisterListener(Request request, Action<string> listener)
+        {
+            RegisterListener(request.Query.ToMurmur2Hash().ToString(), listener);
+        }
+
         /// <summary>
         /// Unregisters a listener for subscriptions.
         /// </summary>
@@ -123,6 +140,18 @@ namespace SimpleGraphQL
         public void UnregisterListener(Action<string> listener)
         {
             HttpUtils.SubscriptionDataReceived -= listener;
+        }
+
+        public void UnregisterListener(string id, Action<string> listener)
+        {
+            if(HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id)) {
+              HttpUtils.SubscriptionDataReceivedPerChannel[id] -= listener;
+            }
+        }
+
+        public void UnregisterListener(Request request, Action<string> listener)
+        {
+            UnregisterListener(request.Query.ToMurmur2Hash().ToString(), listener);
         }
 
         /// <summary>
