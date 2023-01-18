@@ -16,9 +16,26 @@ using Debug = UnityEngine.Debug;
 
 namespace SimpleGraphQL
 {
+    public class RequestDiagnostics : EventArgs
+    {
+        public string requestName { get; set; }
+        public string requestURL { get; set; }
+        public string requestAimlabsID;
+        public long totalTime { get; set; }
+
+        public RequestDiagnostics(string RequestName, string RequestURL, long TotalTime, string RequestAimlabsID)
+        {
+            requestName = RequestName;
+            requestURL = RequestURL;
+            totalTime = TotalTime;
+            requestAimlabsID = RequestAimlabsID;
+        }
+    }
+
     [PublicAPI]
     public static class HttpUtils
     {
+        public static Action<RequestDiagnostics> OnRequestCalled = delegate {  };
         private static ClientWebSocket _webSocket;
 
         /// <summary>
@@ -105,12 +122,11 @@ namespace SimpleGraphQL
 
             try
             {
-                Stopwatch stopwatch = null;
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 if (debug)
                 {
-                    stopwatch = new Stopwatch();
-                    stopwatch.Start();
-
                     Debug.Log($"Firing SimpleGraphQL POST Request {request.OperationName}" +
                               $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
                               "\n\nURL: \n " + requestMessage.RequestUri.ToString() + 
@@ -122,9 +138,16 @@ namespace SimpleGraphQL
                 var response = await httpClient.SendAsync(requestMessage);
                 var responseContent = await response.Content.ReadAsStringAsync();
                 
+                stopwatch.Stop();
+
+                var aimlabsRequestHeader =
+                    response.Headers.FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
+                var aimlabsRequestID = aimlabsRequestHeader.Value != null && aimlabsRequestHeader.Value.Any() ? aimlabsRequestHeader.Value.First() : "(ID NOT FOUND)";
+
+                OnRequestCalled.Invoke(new RequestDiagnostics(request.OperationName, requestMessage.RequestUri.ToString(), stopwatch.ElapsedMilliseconds, aimlabsRequestID));
+
                 if (debug)
                 {
-                    stopwatch.Stop();
                     Debug.Log($"Received SimpleGraphQL POST Response {request.OperationName}" +
                               $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
                               "\n\nTime in ms: \n " + stopwatch.ElapsedMilliseconds + 
@@ -138,9 +161,6 @@ namespace SimpleGraphQL
                 {
                     if (request?.OperationName != null && response?.Headers != null)
                     {
-                        var aimlabsRequestHeader =
-                            response.Headers.FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
-                        var aimlabsRequestID = aimlabsRequestHeader.Value != null && aimlabsRequestHeader.Value.Any() ? aimlabsRequestHeader.Value.First() : "(ID NOT FOUND)"; 
                         Debug.Log($"Received GraphQL Response for {request.OperationName}, id: {aimlabsRequestID}");
                     }
                 }
@@ -152,7 +172,7 @@ namespace SimpleGraphQL
                 throw e;
             }
         }
-
+        
         public static bool IsWebSocketReady() =>
             _webSocket?.State == WebSocketState.Connecting || _webSocket?.State == WebSocketState.Open;
 
