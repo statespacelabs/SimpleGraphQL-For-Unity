@@ -16,6 +16,15 @@ using Debug = UnityEngine.Debug;
 
 namespace SimpleGraphQL
 {
+    public class GraphQLResponse
+    {
+        public string requestName;
+        public string requestURL;
+        public string requestAimlabsID;
+        public string responseContent;
+        public long totalTime;
+    }
+
     [PublicAPI]
     public static class HttpUtils
     {
@@ -65,7 +74,7 @@ namespace SimpleGraphQL
         /// <param name="headers">Any headers that should be passed in</param>
         /// <param name="debug">Prints Debug information on request/response</param>
         /// <returns></returns>
-        public static async Task<string> PostRequest(
+        public static async Task<GraphQLResponse> PostRequest(
             string url,
             Request request,
             Dictionary<string, string> headers = null,
@@ -105,12 +114,10 @@ namespace SimpleGraphQL
 
             try
             {
-                Stopwatch stopwatch = null;
+                DateTime startTime = DateTime.Now;
+
                 if (debug)
                 {
-                    stopwatch = new Stopwatch();
-                    stopwatch.Start();
-
                     Debug.Log($"Firing SimpleGraphQL POST Request {request.OperationName}" +
                               $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
                               "\n\nURL: \n " + requestMessage.RequestUri.ToString() + 
@@ -122,12 +129,18 @@ namespace SimpleGraphQL
                 var response = await httpClient.SendAsync(requestMessage);
                 var responseContent = await response.Content.ReadAsStringAsync();
                 
+                DateTime endTime = DateTime.Now;
+                TimeSpan executionTime = endTime - startTime;
+
+                var aimlabsRequestHeader =
+                    response.Headers.FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
+                var aimlabsRequestID = aimlabsRequestHeader.Value != null && aimlabsRequestHeader.Value.Any() ? aimlabsRequestHeader.Value.First() : "(ID NOT FOUND)";
+                
                 if (debug)
                 {
-                    stopwatch.Stop();
                     Debug.Log($"Received SimpleGraphQL POST Response {request.OperationName}" +
                               $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
-                              "\n\nTime in ms: \n " + stopwatch.ElapsedMilliseconds + 
+                              "\n\nTime in ms: \n " + executionTime.Milliseconds + 
                               "\n\nHeaders: \n " + response.Headers.ToString() + 
                               "\n\nContent: \n" + responseContent +
                               "\n\nRequest URL: \n " + requestMessage.RequestUri.ToString() + 
@@ -138,21 +151,25 @@ namespace SimpleGraphQL
                 {
                     if (request?.OperationName != null && response?.Headers != null)
                     {
-                        var aimlabsRequestHeader =
-                            response.Headers.FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
-                        var aimlabsRequestID = aimlabsRequestHeader.Value != null && aimlabsRequestHeader.Value.Any() ? aimlabsRequestHeader.Value.First() : "(ID NOT FOUND)"; 
                         Debug.Log($"Received GraphQL Response for {request.OperationName}, id: {aimlabsRequestID}");
                     }
                 }
 
-                return responseContent;
+                return new GraphQLResponse()
+                       {
+                           requestName = request.OperationName,
+                           requestURL = requestMessage.RequestUri.ToString(),
+                           requestAimlabsID = aimlabsRequestID,
+                           responseContent = responseContent,
+                           totalTime = executionTime.Milliseconds 
+                    };
             }
             catch (Exception e)
             {
                 throw e;
             }
         }
-
+        
         public static bool IsWebSocketReady() =>
             _webSocket?.State == WebSocketState.Connecting || _webSocket?.State == WebSocketState.Open;
 

@@ -15,6 +15,9 @@ namespace SimpleGraphQL
         [CanBeNull]
         public Error[] Errors { get; set; }
 
+        [CanBeNull] 
+        public GraphQLResponse graphQLResponse;
+        
         [Preserve] // Ensures it survives code-stripping
         public Response()
         {
