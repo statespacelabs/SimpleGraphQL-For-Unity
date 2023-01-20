@@ -49,7 +49,7 @@ namespace SimpleGraphQL
         /// <param name="authToken">The authToken</param>
         /// <param name="authScheme">The authScheme to be used.</param>
         /// <returns></returns>
-        public async Task<string> Send(
+        public async Task<GraphQLResponse> Send(
             Request request,
             JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
@@ -73,7 +73,7 @@ namespace SimpleGraphQL
                 authScheme = AuthScheme;
             }
 
-            string postQueryAsync = await HttpUtils.PostRequest(
+            GraphQLResponse postQueryAsync = await HttpUtils.PostRequest(
                 Endpoint,
                 request,
                 serializerSettings,
@@ -95,8 +95,10 @@ namespace SimpleGraphQL
             bool debug = false
         )
         {
-            string json = await Send(request, serializerSettings, headers, authToken, authScheme, debug);
-            return JsonConvert.DeserializeObject<Response<TResponse>>(json);
+            GraphQLResponse res = await Send(request, serializerSettings, headers, authToken, authScheme, debug);
+            var result = JsonConvert.DeserializeObject<Response<TResponse>>(res.responseContent);
+            result.graphQLResponse = res;
+            return result;
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
