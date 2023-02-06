@@ -93,7 +93,7 @@ namespace SimpleGraphQL
             
             var uri = new Uri(url);
 
-            string payload = request.ToJson();
+            string payload = request.ToJson(false, serializerSettings);
             
             var requestMessage = new HttpRequestMessage();
             //byte[] payload = request.ToBytes(serializerSettings);
