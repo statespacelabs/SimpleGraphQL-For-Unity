@@ -18,6 +18,7 @@ namespace SimpleGraphQL
 {
     public class GraphQLResponse
     {
+        public int statusCode;
         public string requestName;
         public string requestURL;
         public string requestAimlabsID;
@@ -161,6 +162,7 @@ namespace SimpleGraphQL
 
                 return new GraphQLResponse()
                        {
+                           statusCode = (int)response.StatusCode,
                            requestName = request.OperationName,
                            requestURL = requestMessage.RequestUri.ToString(),
                            requestAimlabsID = aimlabsRequestID,
