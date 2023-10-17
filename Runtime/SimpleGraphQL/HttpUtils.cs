@@ -12,6 +12,7 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 using Debug = UnityEngine.Debug;
 
 namespace SimpleGraphQL
@@ -175,6 +176,119 @@ namespace SimpleGraphQL
                 throw e;
             }
         }
+
+
+
+        public static async Task<GraphQLResponse> PostRequestUnity(
+            string url,
+            Request request,
+            JsonSerializerSettings serializerSettings = null,
+            Dictionary<string, string> headers = null,
+            string authToken = null,
+            string authScheme = null,
+            bool debug = false
+        )
+        {
+            var uri = new Uri(url);
+            byte[] payload = request.ToBytes(serializerSettings);
+            string payloadString = request.ToJson(false, serializerSettings).Replace("\\r\\n", "\n");
+
+            var webRequest = new UnityWebRequest(uri, "POST");
+            webRequest.uploadHandler = new UploadHandlerRaw(payload);
+            webRequest.downloadHandler = new DownloadHandlerBuffer();
+
+            // ADDING HEADERS ----------------------------------------------
+            var webRequestHeaders = new Dictionary<string, string>();
+            if (authToken != null)
+            {
+                webRequestHeaders.Add("Authorization", $"{authScheme} {authToken}");
+            }
+            webRequestHeaders.Add("Content-Type", "application/json");
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    webRequestHeaders.Add(header.Key, header.Value);
+                }
+            }
+            foreach (var header in webRequestHeaders)
+            {
+                webRequest.SetRequestHeader(header.Key, header.Value);
+            }
+
+            //Send the request then wait here until it returns
+            try
+            {
+                if (debug)
+                {
+                    Debug.Log($"Firing SimpleGraphQL POST Request {request.OperationName}" +
+                              $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
+                              "\n\nURL: \n " + uri.ToString() +
+                              "\n\nHeaders: \n " + webRequestHeaders.ToString() +
+                              $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
+                              "\n\nContent: \n" + payloadString);
+                }
+
+                var startTime = DateTime.Now;
+                var operation = webRequest.SendWebRequest();
+                operation.completed +=
+                    _ =>
+                    {
+                        if (webRequest.result == UnityWebRequest.Result.ConnectionError)
+                        {
+                            Debug.LogError("Error While Sending: " + webRequest.error);
+                        }
+                    };
+
+                while (!operation.isDone)
+                {
+                    await Task.Yield();
+                }
+
+                var executionTime = DateTime.Now - startTime;
+                var responseContent = webRequest.downloadHandler.text;
+                var aimlabsRequestHeader = webRequest.GetResponseHeaders().FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
+                var aimlabsRequestID = (aimlabsRequestHeader.Value != null) ? aimlabsRequestHeader.Value : "(ID NOT FOUND)";
+
+                if (debug)
+                {
+                    Debug.Log($"Received SimpleGraphQL POST Response {request.OperationName}" +
+                              $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
+                              "\n\nTime in ms: \n " + executionTime.Milliseconds +
+                              "\n\nHeaders: \n " + webRequest.GetResponseHeaders().ToString() +
+                              "\n\nContent: \n" + responseContent +
+                              "\n\nRequest URL: \n " + uri.ToString() +
+                              "\n\nRequest Headers: \n " + webRequestHeaders.ToString() +
+                              "\n\nRequest Content: \n" + payloadString);
+                }
+                else
+                {
+                    if (request?.OperationName != null && webRequest.GetResponseHeaders() != null)
+                    {
+                        Debug.Log($"Received GraphQL Response for {request.OperationName}, id: {aimlabsRequestID}");
+                    }
+                }
+
+                return new GraphQLResponse()
+                {
+                    statusCode = (int)webRequest.responseCode,
+                    requestName = request.OperationName,
+                    requestURL = uri.ToString(),
+                    requestAimlabsID = aimlabsRequestID,
+                    responseContent = responseContent,
+                    totalTime = executionTime.Milliseconds
+                };
+
+            }
+            catch (Exception e)
+            {
+#if UNITY_EDITOR
+                Debug.LogError("[SimpleGraphQL] " + e);
+#endif
+                throw new UnityWebRequestException(webRequest);
+            }
+        }
+
         
         public static bool IsWebSocketReady() =>
             _webSocket?.State == WebSocketState.Connecting || _webSocket?.State == WebSocketState.Open;
