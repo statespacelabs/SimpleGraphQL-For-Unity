@@ -96,7 +96,7 @@ namespace SimpleGraphQL
         )
         {
             GraphQLResponse res = await Send(request, serializerSettings, headers, authToken, authScheme, debug);
-            var result = JsonConvert.DeserializeObject<Response<TResponse>>(res.responseContent);
+            var result = await Task.Run(() => JsonConvert.DeserializeObject<Response<TResponse>>(res.responseContent));
             result.graphQLResponse = res;
             return result;
         }
