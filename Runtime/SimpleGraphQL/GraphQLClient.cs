@@ -16,6 +16,7 @@ namespace SimpleGraphQL
     {
         public readonly List<Query> SearchableQueries;
         public readonly Dictionary<string, string> CustomHeaders;
+        public readonly Dictionary<string, Fragment> Fragments;
 
         public string Endpoint;
         public string AuthScheme;
@@ -24,13 +25,14 @@ namespace SimpleGraphQL
             string endpoint,
             IEnumerable<Query> queries = null,
             Dictionary<string, string> headers = null,
-            string authScheme = null
-        )
+            string authScheme = null,
+            IEnumerable<Fragment> fragments = null)
         {
             Endpoint = endpoint;
             AuthScheme = authScheme;
             SearchableQueries = queries?.ToList();
             CustomHeaders = headers;
+            Fragments = fragments?.ToDictionary(fragment => fragment.Name);
         }
 
         public GraphQLClient(GraphQLConfig config)
@@ -39,6 +41,7 @@ namespace SimpleGraphQL
             SearchableQueries = config.Files.SelectMany(x => x.Queries).ToList();
             CustomHeaders = config.CustomHeaders.ToDictionary(header => header.Key, header => header.Value);
             AuthScheme = config.AuthScheme;
+            Fragments = config.Fragments.ToDictionary(file => file.Fragment.Name, file => file.Fragment);
         }
 
         /// <summary>
@@ -341,6 +344,26 @@ namespace SimpleGraphQL
         public List<Query> FindQueriesByOperation(string operation)
         {
             return SearchableQueries?.FindAll(x => x.OperationName == operation);
+        }
+
+        public List<Fragment> FindFragments(IEnumerable<string> fragmentNames)
+        {
+            List<Fragment> fragments = new();
+
+            if (fragmentNames == null)
+            {
+                return fragments;
+            }
+            
+            foreach (var fragmentName in fragmentNames)
+            {
+                if (Fragments.TryGetValue(fragmentName, out var fragment))
+                {
+                    fragments.Add(fragment);
+                }
+            }
+
+            return fragments;
         }
     }
 }
