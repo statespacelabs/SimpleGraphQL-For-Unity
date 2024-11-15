@@ -33,6 +33,9 @@ namespace SimpleGraphQL
         /// </summary>
         [Header("Custom Headers")]
         public List<Header> CustomHeaders;
+
+        [Header("Json Validation Schemas")]
+        public List<TextAsset> ValidationSchemas;
     }
 
     [Serializable]
