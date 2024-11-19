@@ -448,7 +448,7 @@ namespace SimpleGraphQL
             foreach (var pair in dict)
             {
                 print += pair.Key.ToString() + " - " + pair.Value.ToString();
-                print += "\r";
+                print += "\n";
             }
 
             return print;
