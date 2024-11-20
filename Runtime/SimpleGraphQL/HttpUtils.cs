@@ -444,14 +444,7 @@ namespace SimpleGraphQL
         
         public static string PrintDictionary<TKey, TValue>(this Dictionary<TKey, TValue> dict)
         {
-            string print = string.Empty;
-            foreach (var pair in dict)
-            {
-                print += pair.Key.ToString() + " - " + pair.Value.ToString();
-                print += "\n";
-            }
-
-            return print;
+            return string.Join("\n", dict.Select(pair => string.Format("{0} - {1}", pair.Key, pair.Value)));
         }
     }
 }
