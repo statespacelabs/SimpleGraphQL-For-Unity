@@ -115,7 +115,7 @@ namespace SimpleGraphQL
                         Debug.Log($"Firing SimpleGraphQL POST Request {request.OperationName}" +
                                   $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
                                   "\n\nURL: \n " + uri.ToString() +
-                                  "\n\nHeaders: \n " + webRequestHeaders.ToString() +
+                                  "\n\nHeaders: \n " + webRequestHeaders.PrintDictionary() +
                                   $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
                                   "\n\nContent: \n" + payloadStringDisplayable);
                     }
@@ -146,7 +146,7 @@ namespace SimpleGraphQL
                                   "\n\nHeaders: \n " + webRequest.GetResponseHeaders().ToString() +
                                   "\n\nContent: \n" + responseContent +
                                   "\n\nRequest URL: \n " + uri.ToString() +
-                                  "\n\nRequest Headers: \n " + webRequestHeaders.ToString() +
+                                  "\n\nRequest Headers: \n " + webRequestHeaders.PrintDictionary() +
                                   "\n\nRequest Content: \n" + payloadStringDisplayable);
                     }
                     else
@@ -440,6 +440,11 @@ namespace SimpleGraphQL
 
                 break;
             }
+        }
+        
+        public static string PrintDictionary<TKey, TValue>(this Dictionary<TKey, TValue> dict)
+        {
+            return string.Join("\n", dict.Select(pair => string.Format("{0} - {1}", pair.Key, pair.Value)));
         }
     }
 }
