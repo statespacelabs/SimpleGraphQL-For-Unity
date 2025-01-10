@@ -73,7 +73,8 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
-            bool debug = false
+            bool debug = false,
+            bool silent = false
         )
         {
             var uri = new Uri(url);
@@ -110,7 +111,7 @@ namespace SimpleGraphQL
                 //Send the request then wait here until it returns
                 try
                 {
-                    if (debug)
+                    if (debug && !silent)
                     {
                         Debug.Log($"Firing SimpleGraphQL POST Request {request.OperationName}" +
                                   $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
@@ -138,7 +139,7 @@ namespace SimpleGraphQL
                     var aimlabsRequestHeader = webRequest.GetResponseHeaders().FirstOrDefault(header => header.Key.StartsWith("Aimlabs-Request-Id"));
                     var aimlabsRequestID = (aimlabsRequestHeader.Value != null) ? aimlabsRequestHeader.Value : "(ID NOT FOUND)";
 
-                    if (debug)
+                    if (debug && !silent)
                     {
                         Debug.Log($"Received SimpleGraphQL POST Response {request.OperationName}" +
                                   $"\n\nThread: {Thread.CurrentThread.ManagedThreadId}" +
@@ -149,12 +150,9 @@ namespace SimpleGraphQL
                                   "\n\nRequest Headers: \n " + webRequestHeaders.PrintDictionary() +
                                   "\n\nRequest Content: \n" + payloadStringDisplayable);
                     }
-                    else
+                    else if (!silent && request?.OperationName != null && webRequest.GetResponseHeaders() != null)
                     {
-                        if (request?.OperationName != null && webRequest.GetResponseHeaders() != null)
-                        {
-                            Debug.Log($"Received GraphQL Response for {request.OperationName}, id: {aimlabsRequestID}");
-                        }
+                        Debug.Log($"Received GraphQL Response for {request.OperationName}, id: {aimlabsRequestID}");
                     }
 
                     return new GraphQLResponse()
