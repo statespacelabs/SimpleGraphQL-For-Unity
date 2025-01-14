@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using JetBrains.Annotations;
 
 namespace SimpleGraphQL
@@ -32,6 +34,11 @@ namespace SimpleGraphQL
         /// </summary>
         public string Source;
 
+        /// <summary>
+        /// Fragments used by this query
+        /// </summary>
+        public string[] Fragments;
+        
         public override string ToString()
         {
             return $"{FileName}:{OperationName}:{OperationType}";
@@ -41,14 +48,24 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class QueryExtensions
     {
-        public static Request ToRequest(this Query query, object variables = null)
+        public static Request ToRequest(this Query query, object variables = null, IEnumerable<Fragment> fragments = null)
         {
-            return new Request
+            StringBuilder querySource = new StringBuilder(query.Source);
+
+            if (fragments != null)
             {
-                Query = query.Source,
-                Variables = variables,
-                OperationName = query.OperationName,
-            };
+                foreach (var fragment in fragments)
+                {
+                    querySource.AppendLine(fragment?.Source);
+                }
+            }
+            
+            return new Request
+                   {
+                       Query = querySource.ToString(),
+                       Variables = variables,
+                       OperationName = query.OperationName,
+                   };
         }
     }
 
