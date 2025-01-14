@@ -55,7 +55,8 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
-            bool debug = false
+            bool debug = false,
+            bool silent = false
         )
         {
             if (CustomHeaders != null)
@@ -80,7 +81,8 @@ namespace SimpleGraphQL
                 headers,
                 authToken,
                 authScheme,
-                debug
+                debug,
+                silent
             );
 
             return postQueryAsync;
@@ -92,10 +94,11 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
-            bool debug = false
+            bool debug = false,
+            bool silent = false
         )
         {
-            GraphQLResponse res = await Send(request, serializerSettings, headers, authToken, authScheme, debug);
+            GraphQLResponse res = await Send(request, serializerSettings, headers, authToken, authScheme, debug, silent);
             var result = await Task.Run(() => JsonConvert.DeserializeObject<Response<TResponse>>(res.responseContent));
             result.graphQLResponse = res;
             return result;
@@ -108,9 +111,11 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null,
-            bool debug = false)
+            bool debug = false,
+            bool silent = false
+        )
         {
-            return await Send<TResponse>(request, serializerSettings, headers, authToken, authScheme, debug);
+            return await Send<TResponse>(request, serializerSettings, headers, authToken, authScheme, debug, silent);
         }
 
         /// <summary>
