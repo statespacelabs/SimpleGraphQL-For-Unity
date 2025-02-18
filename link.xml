@@ -2,6 +2,8 @@
     <assembly fullname="LastAbyss.SimpleGraphQL.Runtime">
         <type fullname="SimpleGraphQL.Response*" />
         <type fullname="SimpleGraphQL.Request*" />
+        <type fullname="SimpleGraphQL.Error*" />
+        <type fullname="SimpleGraphQL.Extensions*" />
 
     </assembly>
     <assembly fullname="Newtonsoft.Json">
