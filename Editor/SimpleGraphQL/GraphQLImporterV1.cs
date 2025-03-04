@@ -51,12 +51,15 @@ namespace SimpleGraphQL
                         Debug.LogWarning("Unable to convert operation type in " + ctx.assetPath);
                     }
 
+                    var fragments = operation.Descendants().Where(node => node is GraphQLFragmentSpread).Select(node => ((GraphQLFragmentSpread)node).Name.Value).ToArray();
+                    
                     queryFile.Queries.Add(new Query
                     {
                         FileName = fileName,
                         OperationName = operation.Name?.Value,
                         OperationType = operationType,
-                        Source = contents
+                        Source = contents,
+                        Fragments = fragments
                     });
                 }
             }

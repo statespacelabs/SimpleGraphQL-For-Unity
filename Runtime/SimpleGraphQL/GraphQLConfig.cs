@@ -20,6 +20,9 @@ namespace SimpleGraphQL
         [Header(".graphql Files")]
         public List<GraphQLFile> Files;
 
+        [Header("Fragment files")]
+        public List<GraphQLFragmentFile> Fragments;
+        
         /// <summary>
         /// Set the auth scheme to be used here if you need authentication.
         /// You can also use CustomHeaders to pass in authentication if needed, but this is inherently less secure.
