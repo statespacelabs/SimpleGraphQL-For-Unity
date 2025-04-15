@@ -132,6 +132,7 @@ namespace SimpleGraphQL
                     if (webRequest.result == UnityWebRequest.Result.ConnectionError)
                     {
                         Debug.LogError("Error While Sending: " + webRequest.error);
+                        throw new UnityWebRequestException(webRequest);
                     }
 
                     var executionTime = DateTime.Now - startTime;
